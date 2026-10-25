@@ -1,4 +1,4 @@
-/**
+/* Modified by Tofu (https://github.com/tofu-gallery/bentopdf) on 2026-10-25: workerSrc and sandboxBundleSrc point to ../pdfjs-build/ instead of ../build/, because Tofu's GitHub import leaves out every folder named "build". This note shares the first line so viewer.mjs.map still lines up. */ /**
  * @licstart The following is the entire license notice for the
  * JavaScript code in this page
  *
@@ -775,7 +775,7 @@ const defaultOptions = {
     kind: OptionKind.WORKER
   },
   workerSrc: {
-    value: "../build/pdf.worker.mjs",
+    value: "../pdfjs-build/pdf.worker.mjs",
     kind: OptionKind.WORKER
   }
 };
@@ -785,7 +785,7 @@ const defaultOptions = {
     kind: OptionKind.VIEWER
   };
   defaultOptions.sandboxBundleSrc = {
-    value: "../build/pdf.sandbox.mjs",
+    value: "../pdfjs-build/pdf.sandbox.mjs",
     kind: OptionKind.VIEWER
   };
   defaultOptions.viewerCssTheme = {
