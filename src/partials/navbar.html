@@ -1,3 +1,6 @@
+{{!-- Modified by Tofu (https://github.com/tofu-gallery/bentopdf) on 2026-10-25: the two GitHub
+     buttons are "Source code" links to {{sourceUrl}} (AGPL-3.0 section 13) instead of upstream's
+     repository with its star count. --}}
 {{#if simpleMode}} {{> navbar-simple}} {{else}}
 <nav class="bg-gray-900 border-b border-white/10 sticky top-0 z-30">
   <div class="container mx-auto px-4">
@@ -65,7 +68,7 @@
 
       <div class="hidden lg:flex items-center flex-shrink-0">
         <a
-          href="https://github.com/alam00000/bentopdf/"
+          href="{{sourceUrl}}"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-flex items-center gap-1.5 text-sm font-medium bg-gray-800 text-gray-200 border border-gray-600 pl-2.5 pr-3 py-1 rounded-full transition-colors duration-200 shadow-sm hover:shadow-md hover:bg-gray-700"
@@ -82,14 +85,14 @@
               clip-rule="evenodd"
             />
           </svg>
-          <span id="github-stars-desktop">-</span>
+          <span data-i18n="nav.sourceCode">Source code</span>
         </a>
       </div>
 
       <!-- Mobile Hamburger Button -->
       <div class="lg:hidden flex items-center gap-4">
         <a
-          href="https://github.com/alam00000/bentopdf/"
+          href="{{sourceUrl}}"
           target="_blank"
           rel="noopener noreferrer"
           class="inline-flex items-center gap-1.5 text-sm font-medium bg-gray-800 text-gray-200 border border-gray-600 pl-2.5 pr-3 py-1 rounded-full transition-colors duration-200 shadow-sm hover:shadow-md hover:bg-gray-700"
@@ -106,7 +109,7 @@
               clip-rule="evenodd"
             />
           </svg>
-          <span id="github-stars-mobile">-</span>
+          <span data-i18n="nav.sourceCode">Source code</span>
         </a>
         <button
           id="mobile-menu-button"

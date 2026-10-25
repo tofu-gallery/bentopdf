@@ -1,3 +1,6 @@
+{{!-- Modified by Tofu (https://github.com/tofu-gallery/bentopdf) on 2026-10-25: the GitHub icon
+     links to {{sourceUrl}}, this copy's own source (AGPL-3.0 section 13), and the DigitalOcean
+     referral badge (an affiliate link) is removed. --}}
 {{#if simpleMode}} {{> footer-simple}} {{else}}
 <footer class="border-t border-white/10 py-12">
   <div class="container mx-auto px-4">
@@ -19,19 +22,6 @@
           <span data-i18n="footer.version">Version</span>
           <span id="app-version">{{appVersion}}</span>
         </p>
-        <a
-          href="https://www.digitalocean.com/?refcode=d93c189ef6d0&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="hide-section inline-block mt-4"
-        >
-          <img
-            src="{{baseUrl}}images/badge.svg"
-            alt="DigitalOcean Referral Badge"
-            width="150"
-            height="32"
-          />
-        </a>
       </div>
 
       <div>
@@ -149,11 +139,12 @@
         </h3>
         <div class="flex justify-center md:justify-start space-x-4">
           <a
-            href="https://github.com/alam00000/bentopdf"
+            href="{{sourceUrl}}"
             target="_blank"
             rel="noopener noreferrer"
             class="text-gray-400 hover:text-indigo-400"
-            title="GitHub"
+            title="Source code"
+            aria-label="Source code"
           >
             <svg
               class="w-6 h-6"

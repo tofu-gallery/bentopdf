@@ -1,3 +1,5 @@
+// Modified by Tofu (https://github.com/tofu-gallery/bentopdf) on 2026-10-25:
+// the HTML templates get `sourceUrl`, VITE_SOURCE_URL or this repository.
 import { defineConfig } from 'vitest/config';
 import type { IncomingMessage, ServerResponse } from 'http';
 import http from 'http';
@@ -703,6 +705,10 @@ export default defineConfig(() => {
           brandLogo: process.env.VITE_BRAND_LOGO || '',
           footerText: process.env.VITE_FOOTER_TEXT || '',
           appVersion: process.env.npm_package_version || 'Unknown',
+          // Tofu, 2026-10-25: where the "Source code" links point (AGPL-3.0 section 13).
+          sourceUrl:
+            process.env.VITE_SOURCE_URL ||
+            'https://github.com/tofu-gallery/bentopdf',
         },
       }),
       languageRouterPlugin(),
