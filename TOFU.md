@@ -1,0 +1,85 @@
+# Tofu gallery copy
+
+This repository is Tofu's copy of **alam00000/bentopdf** (licence: AGPL-3.0-only), listed in Tofu's app gallery as **BentoPDF**, a **PDF toolkit**: more than a hundred tools (merge, split, compress, sign, OCR, convert, edit and more) that process files entirely in the visitor's browser. No file is uploaded to a server.
+
+- `main` mirrors the upstream repository and is never committed to by Tofu.
+- `tofu` carries Tofu's own changes; tags named `pin/<date>` mark the versions the gallery points to.
+- A visitor who chooses this app gets a private snapshot of the pinned version in their own Tofu account. Their copy does not follow upstream updates.
+
+## How Tofu runs it
+
+- **Framework preset:** `vite`, built on Tofu's server hosting (provider `vercel`), which the Free plan includes. Tofu's shared static lane does not take this app: its source has about 4,800 files (that lane builds at most 2,000), its build script runs ten steps around `vite build`, its `vite.config.ts` is outside the shape that lane builds, and the build publishes about 5,200 files (that lane publishes at most 500). Tofu's detector answers `container` for it because of the root `Dockerfile` (upstream's own image); the gallery sets the preset to `vite`, and that file is not used.
+- **Root folder:** the repository root.
+- **Install:** `npm ci`, from `package-lock.json` (`installCommand` in `vercel.json`). Three dependencies are tarballs committed in `vendor/` (`bentopdf-pdfium`, `bentopdf-viewer`, `hyper-compress-wasm`), and `xlsx` comes from `https://cdn.sheetjs.com`, as upstream's lockfile says. The `prepare` script runs `husky`, which prints `.git can't be found` in a build without git and carries on.
+- **Build:** `npm run build` (`buildCommand` in `vercel.json`): the blog page, the tool links, `tsc`, `vite build`, then upstream's scripts that add structured data, write a page for each of the 24 languages (with `--max-old-space-size=3072`), the sitemap, the security headers, the indexing policy, recompress the HTML and audit it. **Output directory:** `dist/` (`outputDirectory` in `vercel.json`). `vercel.json` also gives the site its clean addresses (`/merge-pdf` serves `merge-pdf.html`), upstream's redirects for old addresses and its security headers (a Content-Security-Policy, `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless`, which some engines need).
+- **Database:** none. Files are processed in the browser and never leave it. The browser keeps only preferences (local storage and one IndexedDB database), and a service worker (`public/sw.js`) caches the app and its engines.
+- **Engines:** the PyMuPDF, Ghostscript and CoherentPDF WebAssembly engines load from jsDelivr when a tool first needs them (the defaults in `src/js/utils/wasm-provider.ts`; `VITE_WASM_PYMUPDF_URL`, `VITE_WASM_GS_URL` and `VITE_WASM_CPDF_URL` point them elsewhere). The OCR tool's Tesseract.js files load from Tesseract.js's own default address on jsDelivr unless the `VITE_TESSERACT_*` settings name others.
+
+### Settings
+
+| Setting | Who sets it | What it does |
+|---|---|---|
+| `VITE_SOURCE_URL` | Tofu's gallery, on every copy: `https://github.com/tofu-gallery/bentopdf/tree/<commit>`, the exact version the copy runs | Where every **Source code** link points (see below). Unset or empty: `https://github.com/tofu-gallery/bentopdf`. |
+| `SITE_URL` | Tofu's gallery, on every copy: the copy's own address | The canonical, `hreflang`, `og:url` and sitemap addresses. Unset, they name `https://www.bentopdf.com`. While it names any other site, every page carries `noindex` (upstream's rule in `scripts/indexing-policy.mjs`); set `ALLOW_INDEXING=true` to let search engines index the copy. If the copy's address changes (a custom domain), change `SITE_URL` to match. |
+| `SIMPLE_MODE=true` | the owner, if they want it | Upstream's "Self-Hosted build", which its README recommends for internal and team use: the tools without the marketing home page (hero, "Used by" logos, testimonials, FAQ) and with the short navigation and footer. The footer keeps a **Source code** link. |
+| `VITE_BRAND_NAME`, `VITE_BRAND_LOGO`, `VITE_FOOTER_TEXT` | the owner, if they want it | Upstream's own branding settings: the name, the logo (a path under `public/`) and the footer line in place of BentoPDF's. |
+| `VITE_DEFAULT_LANGUAGE`, `DISABLE_TOOLS`, `VITE_CORS_PROXY_URL` and the other names in `.env.example` | the owner, if they want it | Upstream's options. `VITE_CORS_PROXY_URL` names a proxy the owner runs (upstream's `cloudflare/cors-proxy-worker.js` is one): the digital signature tools need it to fetch certificate chains and timestamps from servers that send no CORS headers, and without one those lookups fail with the app's own message. Upstream's own proxy is used only on bentopdf.com. |
+
+Every setting is read when the app is built, so deploy again after changing one.
+
+## Source code link
+
+BentoPDF is AGPL-3.0-only: everyone who uses a copy over the network must be offered that copy's source (section 13). Every page shows a **Source code** link before anything else is asked of the visitor: the button at the top right of the navigation bar (on phones, beside the menu button), the GitHub icon in the footer, the link in the shorter footers of the multi-tool and workflow pages and of simple mode, and the AGPL section's **View on GitHub** button on the Licensing page. All of them open `VITE_SOURCE_URL`, or this repository when it is unset. The label is translated into the 24 languages the app ships.
+
+If you change the code, put your changed source where anyone can read it (a public repository is enough) and set `VITE_SOURCE_URL` to that address, then deploy again; otherwise the links send people to Tofu's copy, which is not your version.
+
+## What Tofu changes
+
+Changed on the `tofu` branch on 2026-10-25, on top of upstream commit `4edb1718cc195a59f0cedb473ca96f30c1bb6f43` of alam00000/bentopdf (version 2.8.10, "feat: translate all pages, UI messages and docs and fix SEO redirects and indexing"):
+
+- **The LibreOffice engine and the air-gap bundle are removed, and the 13 tools that need them are switched off.** `public/libreoffice-wasm/` (74 MB) and `bentopdf-airgap-bundle/` (49 MB) put the repository's archive at 167 MB, over the 50 MB Tofu's GitHub import takes, and the two LibreOffice data files are over its 25 MB limit for one file (`soffice.wasm.gz` is 48.8 MB). Nothing else reads them: the other engines load from jsDelivr, and the air-gap bundle is for offline Docker installs. The LibreOffice loader (`src/js/utils/libreoffice-loader.ts`) reads only that local folder, so `public/config.json`, the app's own runtime setting, now lists the tools that use it in `disabledTools`: Word, Excel, PowerPoint, ODT, ODS, ODP, ODG, RTF, Pages, Publisher, Visio, WordPerfect and WPS to PDF. The home page and the workflow builder leave them out, and opening one of their pages shows the app's own **This tool has been disabled** message. Every other conversion (images, text, Markdown, CSV, JSON, e-books, email, XPS and more) stays. To bring the 13 back, serve upstream's `public/libreoffice-wasm/` files and empty that list.
+- **The annotation viewer's pdf.js files moved out of a folder named `build`.** Tofu's import leaves out every folder named `build`, so `public/pdfjs-annotation-viewer/build/` would never reach a copy and the **Add Stamps** tool's viewer could not load pdf.js. The six files moved unchanged to `public/pdfjs-annotation-viewer/pdfjs-build/`, and the three places that name that folder follow: the script tag in `web/viewer.html` and the `workerSrc` and `sandboxBundleSrc` defaults in `web/viewer.mjs`. The source maps still name the old folder; nothing loads them.
+- **Source code links** (see above). `vite.config.ts` gives the HTML templates `sourceUrl`. `src/partials/navbar.html`: the two GitHub buttons open it and read **Source code**; they used to show upstream's GitHub star count, fetched from `api.github.com` on every home page visit, and with the counters gone `src/js/main.ts` no longer makes that request. `src/partials/footer.html`: the GitHub icon opens it. `src/partials/footer-compact.html` and `src/partials/footer-simple.html`: a new **Source code** link. `licensing.html`: the AGPL section's **View on GitHub** opens it; the commercial licence section still names upstream's repository, which is what that licence covers. `public/locales/*/common.json`: the label `nav.sourceCode` in each of the 24 languages.
+- **The donation ribbon and the referral badge are removed.** `index.html` showed a ribbon under the navigation bar asking visitors to donate to upstream through Ko-fi and GitHub Sponsors; `src/partials/footer.html` carried a DigitalOcean referral badge (an affiliate link with upstream's referral code). A copy in someone else's account asks its visitors for neither. Upstream's other credits stay.
+- **`vercel.json` builds the app alone.** Its `buildCommand` was `npm run build:with-docs`, which also builds the VitePress site in `docs/` (about 3,100 Markdown pages): the documentation of bentopdf.com itself. The app's own **Docs** links already open https://www.bentopdf.com/docs, so `npm run build` (the same app build without it) is enough, with less time and memory and thousands fewer files. `docs/` stays: `scripts/generate-i18n-pages.mjs` reads it to choose the language of those Docs links, and the build stops without it.
+- **Dated notices.** Every file Tofu changed carries a note saying so, with the date (handlebars comments, which the build strips, in the HTML templates), except the JSON files (`public/config.json`, `vercel.json`, `public/locales/*/common.json`), which cannot hold a comment and are listed here.
+
+### Left as upstream wrote them
+
+- The marketing home page: the "Used by companies and people working at" row of company logos, the testimonials, the compliance badges and the FAQ, all upstream's own claims about BentoPDF. `SIMPLE_MODE=true` (above) leaves them out.
+- The About, Contact, Licensing, Privacy and Terms pages, the Kura and Hyper Compress pages (upstream's other products, in the **Products** menu) and the blog post: they describe the upstream project, and the Contact page names upstream's email address and issue tracker.
+- The BentoPDF name and logo, the footer line "© 2026 BentoPDF. All rights reserved." and the social-preview images, which point at bentopdf.com. The branding settings above replace the name, logo and footer line.
+- The deployment files for other platforms (`Dockerfile`, `Dockerfile.nonroot`, the `docker-compose` files, the nginx files, `chart/` for Helm, `cloudflare/`, `unraid_bentopdf.xml`, `.htaccess`, `serve.json`), the GitHub workflows in `.github/` (GitHub runs none of them in this fork unless someone turns Actions on) and `.well-known/funding-manifest-urls`. Tofu builds none of them.
+- `vercel.json`'s redirects and its headers for `/docs` and `/libreoffice-wasm/`, which now name addresses this build does not serve.
+- Without git, `scripts/generate-sitemap.mjs` prints `fatal: not a git repository` once for each page while it looks for dates, then dates each page by its file; the build carries on.
+
+## Licence
+
+AGPL-3.0-only (`LICENSE`), as upstream releases it; upstream also sells a commercial licence, which this copy does not use. Licence files and copyright notices stay as they are. Bundled components keep their own licences and notices: pdf.js (Apache-2.0, in `public/pdfjs-viewer/` and `public/pdfjs-annotation-viewer/`), the qpdf WebAssembly build (`public/qpdf.wasm`), CoherentPDF's browser build (`public/coherentpdf.browser.min.js`) and the fonts from the `@fontsource` packages. The PyMuPDF, Ghostscript and CoherentPDF engines a copy loads from jsDelivr are AGPL-3.0 too; upstream's README lists them. "BentoPDF" and its logo are upstream's name and brand, and the company logos on the home page belong to those companies.
+
+The modified source of the app Tofu hosts is this public repository, https://github.com/tofu-gallery/bentopdf, at the tag the gallery pins on the `tofu` branch, and each copy's **Source code** links open the exact commit it was made from.
+
+## Verification
+
+Run on 2026-10-25 on macOS (Apple silicon) with Node 22.22.3 and npm 10.9.8, on the files Tofu's import delivers: the `tofu` branch at `0a132f4`, the last commit before this file, exported with `git archive` into a folder with no `.git` (4,808 files, the same count Tofu's import kept). Nothing was deployed and no Docker image was built.
+
+1. **Install:** `npm ci` passed: 881 packages, including the three `vendor/` tarballs and `xlsx` from cdn.sheetjs.com. `husky` printed `.git can't be found` and the install went on. The only warnings were deprecation notices.
+2. **Build, as a copy builds:** `SITE_URL=https://pdf-toolkit.example.com VITE_SOURCE_URL=https://github.com/tofu-gallery/bentopdf/tree/0a132f4 npm run build` passed in 97 seconds, using at most 2.1 GB of memory: `tsc` clean, `vite build` with upstream's own warnings (modules externalised for the browser, `eval` in wasm-vips, chunks over 500 kB), the 139 pages written again in each of the other 23 languages (3,197 pages; "Page content translated: … 97%"), a sitemap of 137 addresses with 24 `hreflang` alternates each, 3,343 pages marked `noindex`, and "SEO audit: 3339 HTML files passed, sitemap clean". `dist/` holds 5,172 files, 251 MB; the largest is a 7.4 MB WebAssembly file.
+3. **Built pages:** each page's navigation and footer carry the `VITE_SOURCE_URL` address (three links a page, four on the Licensing page), with the label translated (for example `Quellcode` in `de/`, `源代码` in `zh/`); the canonical address is `https://pdf-toolkit.example.com/`.
+4. **Serve:** `vite preview --host 127.0.0.1` (upstream's own preview server, which routes the language folders) answered 200 for `/`, `/merge-pdf`, `/reverse-pages`, `/word-to-pdf`, `/de/`, `/de/merge-pdf`, `/licensing`, `/add-stamps`, `/config.json`, `/sitemap.xml` and the annotation viewer with its three files in `pdfjs-build/`.
+5. **Browser** (headless Chromium, every request to anything but 127.0.0.1 blocked and recorded):
+   - The home page at 1280 pixels shows the tool grid with **Merge PDF** and without any of the 13 switched-off tools, no donation ribbon, a visible **Source code** button in the navigation bar and the footer's GitHub icon, both opening `https://github.com/tofu-gallery/bentopdf/tree/0a132f4`. At 390 pixels the **Source code** button sits beside the menu button and the page is 390 pixels wide.
+   - `/word-to-pdf` shows **This tool has been disabled**.
+   - **Reverse pages** on a three-page PDF whose pages are 200, 300 and 400 points wide downloaded `three-pages.pdf` (599 bytes); read back with the app's own pdf.js, its pages are 400, 300 and 200 points wide.
+   - The annotation viewer loaded `pdfjs-annotation-viewer/pdfjs-build/pdf.mjs` (200).
+   - No page errors, no failed request, and no request left 127.0.0.1.
+6. **Build with no settings:** `npm run build` with neither setting passed too ("SEO audit: 3339 HTML files passed, sitemap clean"). Its pages link to `https://github.com/tofu-gallery/bentopdf` (three links a page, four on the Licensing page) and none to upstream's repository from the navigation bar; their canonical address is `https://www.bentopdf.com` and they carry no `noindex`, which is why the gallery sets `SITE_URL`.
+
+Not run: upstream's Vitest suite, ESLint, the docs build, the tools that need the engines from jsDelivr (no request left 127.0.0.1), camera or file-system features, and the service worker on HTTPS.
+
+## Still needs a real deploy
+
+- The deploy lands on Tofu's server hosting (provider `vercel`) with the Vite preset, where Vercel's Linux build runs `npm ci` and `npm run build` from `vercel.json`; the check above ran on macOS.
+- `vercel.json`'s clean addresses, redirects and headers, which `vite preview` does not apply; in particular that the Content-Security-Policy lets the jsDelivr engines load and that the COOP and COEP headers do not stop them.
+- The tools that load PyMuPDF, Ghostscript, CoherentPDF or Tesseract from jsDelivr (merge, compress, PDF/A, OCR and others).
+- On a copy made by Tofu's gallery, the **Source code** links opening that copy's commit and `SITE_URL` naming the copy's address.
