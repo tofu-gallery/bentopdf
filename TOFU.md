@@ -61,6 +61,26 @@ The modified source of the app Tofu hosts is this public repository, https://git
 
 ## Verification
 
+### Simple mode's Source code link (`pin/2026-10-25.1`)
+
+Run on 2026-10-25 on macOS (Apple silicon) with Node 22.22.3 and npm 10.9.8, on the `tofu` branch at `554cc97`, the code of this pin (the commits after it change only this file), exported with `git archive` into a folder with no `.git` (4,809 files). Every execute bit in that folder was then removed (`find <folder> -type f -exec chmod a-x {} +`), because Tofu's import and upload keep no file mode. Before that, three files had one (`scripts/check-translations.js`, `scripts/prepare-airgap.sh` and an ICC colour profile); the install and the build run none of them, and the build's only other program is `git`, which the sitemap step asks for page dates. Nothing was deployed and no Docker image was built.
+
+1. **Install:** `npm ci` passed (881 packages; `husky` printed `.git can't be found` and the install went on).
+2. **Simple mode:** `SIMPLE_MODE=true SITE_URL=https://bentopdf-copy.example.com VITE_SOURCE_URL=https://github.com/tofu-gallery/bentopdf/tree/554cc97c9d60390bb416271817065fda8a334703 npm run build` passed in 73 seconds, using at most 2.1 GB of memory, ending with "SEO audit: 3339 HTML files passed, sitemap clean". All 3,339 pages link the `VITE_SOURCE_URL` address, among them simple mode's home, multi-tool and workflow pages in all 24 languages (the label reads `Quellcode` in `de/` and `源代码` in `zh/`). The only HTML files without it are the four pdf.js viewers that tool pages show inside a frame (`pdfjs-viewer/viewer.html`, `sign-viewer.html` and `form-viewer.html`, and `pdfjs-annotation-viewer/web/viewer.html`).
+3. **As a copy builds:** the same build without `SIMPLE_MODE` passed in 89 seconds (at most 2.3 GB) with the same audit line. `dist/` holds 5,172 files, 251 MB, and again all 3,339 pages link the `VITE_SOURCE_URL` address.
+4. **Blog pages:** in both builds `blog/index.html`, `blog/edit-pdf-without-uploading.html` and `blog/author-alam.html` have their canonical and `og:url` addresses on `https://www.bentopdf.com/blog…` and robots `noindex, follow`, and `sitemap.xml` lists no blog address.
+5. **Serve:** `vite preview --host 127.0.0.1` answered 200 for `/`, `/pdf-multi-tool`, `/pdf-workflow`, `/merge-pdf`, `/de/`, `/licensing`, `/reverse-pages`, `/sitemap.xml` and `/config.json` of the simple-mode build, and for the first four of the other build.
+6. **Browser** (headless Chromium at 1280 and 390 pixels, service workers off, every request to anything but 127.0.0.1 blocked and recorded):
+   - Simple mode: `/`, `/merge-pdf` and `/de/` show the **Source code** button at the right of the navigation bar and the footer's **Source code** link; `/pdf-multi-tool`, `/pdf-workflow` and `/zh/pdf-workflow` show the navigation bar's button; `/licensing` shows both and its **View on GitHub** button. Every one is visible and inside the window, and no page is wider than the window. Clicking the home page's button opened a new tab for the `VITE_SOURCE_URL` address.
+   - Simple mode's **Reverse pages** turned a three-page PDF whose pages are 200, 300 and 400 points wide into `three-pages.pdf` (599 bytes), whose pages are 400, 300 and 200 points wide (read back from its page tree).
+   - The build without `SIMPLE_MODE`: `/`, `/pdf-multi-tool`, `/pdf-workflow` and `/merge-pdf` show the navigation bar's **Source code** button (the desktop one at 1280 pixels, the phone one at 390) and the footer's GitHub icon, or on the multi-tool and workflow pages the shorter footer's link.
+   - No page errors and no failed local request; the only request that tried to leave 127.0.0.1 was that new tab.
+7. **Tofu's own check** (the branch imported the way Tofu's GitHub import does, then Tofu's static-lane predicates and its safety check) on the `tofu` branch at `a436616`: 4,809 files, detected as `container` (upstream's root `Dockerfile`; the gallery sets `vite`), not on the static lane (`source_limits`), safety ok with 13 findings, none blocking.
+
+Not run this time: upstream's Vitest suite, ESLint, the tools that need the engines from jsDelivr, and the steps of the first check that this change does not touch (the disabled LibreOffice tools and the annotation viewer).
+
+### First check (`pin/2026-10-25`)
+
 Run on 2026-10-25 on macOS (Apple silicon) with Node 22.22.3 and npm 10.9.8, on the files Tofu's import delivers: the `tofu` branch at `0a132f4`, the last commit before this file, exported with `git archive` into a folder with no `.git` (4,808 files, the same count Tofu's import kept). Nothing was deployed and no Docker image was built.
 
 1. **Install:** `npm ci` passed: 881 packages, including the three `vendor/` tarballs and `xlsx` from cdn.sheetjs.com. `husky` printed `.git can't be found` and the install went on. The only warnings were deprecation notices.
