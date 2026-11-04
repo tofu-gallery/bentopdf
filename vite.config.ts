@@ -78,6 +78,7 @@ function loadPages(): Set<string> {
     'licensing',
     'kura',
     'hyper-compress',
+    'advertise',
     '404',
     'pdf-converter',
     'pdf-editor',
@@ -686,6 +687,11 @@ export default defineConfig(({ command }) => {
     (command === 'serve' || process.env.INCLUDE_DOCS === 'true')
       ? '/docs/'
       : 'https://www.bentopdf.com/docs';
+  const showAds =
+    command === 'serve' ||
+    ['bentopdf.com', 'www.bentopdf.com'].includes(
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? ''
+    );
 
   if (USE_CDN) {
     console.log('[Vite] Using CDN for WASM files (with local fallback)');
@@ -710,6 +716,7 @@ export default defineConfig(({ command }) => {
           brandLogo: process.env.VITE_BRAND_LOGO || '',
           footerText: process.env.VITE_FOOTER_TEXT || '',
           appVersion: process.env.npm_package_version || 'Unknown',
+          showAds,
           // Tofu, 2026-10-25: where the "Source code" links point (AGPL-3.0 section 13).
           sourceUrl:
             process.env.VITE_SOURCE_URL ||
@@ -809,6 +816,9 @@ export default defineConfig(({ command }) => {
           licensing: resolve(__dirname, 'licensing.html'),
           kura: resolve(__dirname, 'kura.html'),
           'hyper-compress': resolve(__dirname, 'hyper-compress.html'),
+          ...(showAds
+            ? { advertise: resolve(__dirname, 'advertise.html') }
+            : {}),
           ...Object.fromEntries(
             fs
               .readdirSync(resolve(__dirname, 'blog'))
